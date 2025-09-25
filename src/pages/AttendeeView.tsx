@@ -61,14 +61,6 @@ const AttendeeView = () => {
       {/* QR Code Section */}
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-sm">
-          {/* Connection Status */}
-          <ConnectionStatus
-            isOnline={qrState.isOnline}
-            isLoading={qrState.isLoading}
-            error={qrState.error}
-            sessionInfo={qrState.sessionInfo}
-            onRetry={qrState.retry}
-          />
 
           {/* QR Code Display */}
           <QRDisplay

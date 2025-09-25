@@ -2,7 +2,7 @@
 import { Clock, RefreshCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import SuperSimpleQR from "@/components/QRCode";
+import QRCode from "@/components/QRCode";
 
 interface QRDisplayProps {
   jwt: string;
@@ -70,7 +70,7 @@ const QRDisplay = ({
           <div className="space-y-3">
             {/* AQUI ESTA EL COMPONENTE SuperSimpleQR */}
             <div className="flex justify-center">
-              <SuperSimpleQR value={jwt} />
+              <QRCode value={jwt} />
             </div>
             
             {/* JWT Info */}
