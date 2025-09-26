@@ -2,8 +2,7 @@
 
 export interface SessionInfo {
   ticketId: string;
-  session_key: string;
-  exp: number;
+  sessionKey: string;
 }
 
 export interface BackofficeConfig {
@@ -47,7 +46,7 @@ export class BackofficeService {
       const data: SessionInfo = await response.json();
       
       // Validar la respuesta
-      if (!data.ticketId || !data.session_key || !data.exp) {
+      if (!data.ticketId || !data.sessionKey) {
         throw new Error('Respuesta inválida del servidor');
       }
 
