@@ -30,15 +30,15 @@ export class BackofficeService {
 
     try {
       const response = await fetch(
-        `${this.config.baseUrl}/api/tickets/${ticketId}/session`,
+        `/api/tickets/session`,
         {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticketId }),
           signal: controller.signal
         }
       );
+
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);

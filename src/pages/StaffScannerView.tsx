@@ -92,10 +92,10 @@ const StaffScannerView = () => {
       let payload: Record<string, unknown> = {};
  
       if (staffData.role === "GATE") {
-        endpoint = `${API_BASE}/validate/scan`;
+        endpoint = `/api/gate/validate/scan`;
         payload = { qr: qrCode, gateId: staffData.gateId };
       } else {
-        endpoint = `${API_BASE}/zones/checkpoint/scan`;
+        endpoint = `/api/zone/zones/checkpoint/scan`;
         payload = { qr: qrCode, zoneCheckpointId: staffData.zoneCheckpointId };
       }
  

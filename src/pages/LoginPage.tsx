@@ -34,8 +34,13 @@ const LoginPage = () => {
     setError(null);
  
     try {
-      const url = `${API_BASE}/api/tickets/${encodeURIComponent(formData.ticketId)}/session`;
-      const response = await fetch(url);
+      const url = `/api/tickets/session`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticketId: formData.ticketId }),
+      });
+
  
       if (!response.ok) {
         // intenta leer mensaje de error del backend
@@ -77,7 +82,7 @@ const LoginPage = () => {
     setError(null);
  
     try {
-      const url = `${API_BASE}/api/staff/login`;
+      const url = `/api/staff/login`;
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
