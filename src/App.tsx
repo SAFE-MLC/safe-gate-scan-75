@@ -3,7 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
 import ScannerView from "./pages/ScannerView";
+import StaffScannerView from "./pages/StaffScannerView";
 import TicketDetailView from "./pages/TicketDetailView";
 import AttendeeView from "./pages/AttendeeView";
 import NotFound from "./pages/NotFound";
@@ -17,10 +19,19 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<ScannerView />} />
-          <Route path="/ticket/:id" element={<TicketDetailView />} />
+          {/* Login page as root */}
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          
+          {/* Staff routes */}
+          <Route path="/scanner" element={<StaffScannerView />} />
+          <Route path="/staff-scanner" element={<ScannerView />} /> {/* Keep old one for compatibility */}
+          
+          {/* Client routes */}
           <Route path="/attendee" element={<AttendeeView />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/ticket/:id" element={<TicketDetailView />} />
+          
+          {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

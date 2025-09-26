@@ -1,8 +1,10 @@
+// src/pages/AttendeeView.tsx - VERSIÓN ORIGINAL QUE FUNCIONABA
 import { useState, useEffect } from "react";
-import { Info, Wifi, WifiOff } from "lucide-react";
+import { Info, Clock, Wifi, WifiOff, RefreshCw, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import StatusBadge from "@/components/StatusBadge";
-import QRDisplay from "@/components/QRDisplay";
-import ConnectionStatus from "@/components/ConnectionStatus";
+import SuperSimpleQR from "@/components/QRCode";
 import { mockTicket, mockEntitlements } from "@/data/mockData";
 import { useRotatingQR } from "@/hooks/useRotatingQR";
 
@@ -10,9 +12,21 @@ const AttendeeView = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [brightness, setBrightness] = useState(100);
 
-  // Configuración
+  // Configuración simple - usar datos del login si existen, sino usar mock
+  const storedSession = localStorage.getItem('ticketSession');
+  let ticketId = 'TK-001';
+  
+  if (storedSession) {
+    try {
+      const sessionData = JSON.parse(storedSession);
+      ticketId = sessionData.ticketId;
+    } catch (error) {
+      console.log('Usando ticket por defecto');
+    }
+  }
+
   const QR_CONFIG = {
-    ticketId: mockTicket.ticketId,
+    ticketId: ticketId,
     eventId: 'evt_1',
     backofficeUrl: 'http://localhost:8080',
     qrTtlSeconds: 20,
@@ -36,6 +50,18 @@ const AttendeeView = () => {
     setTimeout(() => setBrightness(100), 5000);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('ticketSession');
+    window.location.href = '/login';
+  };
+
+  // Determinar color del timer
+  const getTimerColor = () => {
+    if (qrState.timeRemaining <= 5) return 'text-red-600';
+    if (qrState.timeRemaining <= 10) return 'text-yellow-600';
+    return 'text-gray-600';
+  };
+
   return (
     <div 
       className="min-h-screen bg-background flex flex-col"
@@ -54,6 +80,11 @@ const AttendeeView = () => {
             ) : (
               <WifiOff size={16} className="text-red-500" />
             )}
+            
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="ml-2">
+              <LogOut size={14} className="mr-1" />
+              Salir
+            </Button>
           </div>
         </div>
       </header>
@@ -61,95 +92,113 @@ const AttendeeView = () => {
       {/* QR Code Section */}
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-sm">
+          
+          {/* Error State */}
+          {qrState.error && !qrState.isLoading && (
+            <Card className="bg-red-50 border-red-200 p-4 mb-4">
+              <div className="text-center">
+                <WifiOff size={24} className="text-red-500 mx-auto mb-2" />
+                <p className="text-sm text-red-600 mb-3">{qrState.error}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={qrState.retry}
+                  className="border-red-200"
+                >
+                  <RefreshCw size={16} className="mr-2" />
+                  Reintentar
+                </Button>
+              </div>
+            </Card>
+          )}
 
-          {/* QR Code Display */}
-          <QRDisplay
-            jwt={qrState.currentJWT}
-            timeRemaining={qrState.timeRemaining}
-            lastSync={qrState.lastSync}
-            onRefresh={qrState.forceRotate}
-            onBrightnessBoost={increaseBrightness}
-            isLoading={qrState.isLoading}
-          />
+          {/* QR Code Card */}
+          <Card className="bg-white p-8 relative">
+            <div className="absolute top-4 right-4">
+              <div className={`flex items-center gap-1 text-xs ${getTimerColor()}`}>
+                <Clock size={12} />
+                <span>{qrState.timeRemaining}s</span>
+              </div>
+            </div>
+            
+            <div className="absolute top-4 left-4">
+              <button
+                onClick={qrState.forceRotate}
+                className="p-1 hover:bg-gray-100 rounded"
+                title="Regenerar QR"
+              >
+                <RefreshCw size={14} className="text-gray-400" />
+              </button>
+            </div>
+            
+            {/* QR Content */}
+            <div className="aspect-square bg-black/5 rounded-lg flex items-center justify-center relative">
+              <div className="absolute inset-2 border-2 border-black opacity-10 rounded" />
+              <div className="absolute inset-4 border border-black opacity-10 rounded" />
+              <div className="absolute inset-6 border-2 border-black opacity-10 rounded" />
+              
+              {/* QR Display */}
+              <div className="text-center">
+                {qrState.currentJWT ? (
+                  <div className="space-y-2">
+                    <div className="mx-auto">
+                      <SuperSimpleQR value={qrState.currentJWT} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <RefreshCw 
+                      size={120} 
+                      className="text-gray-300 mx-auto animate-spin" 
+                    />
+                    <p className="text-xs text-gray-500">Generando QR...</p>
+                  </div>
+                )}
+                
+                {qrState.lastSync && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    Última sincronización: {qrState.lastSync.toLocaleTimeString()}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <Button
+              variant="ghost"
+              className="w-full mt-4 text-gray-600"
+              onClick={increaseBrightness}
+            >
+              Aumentar brillo
+            </Button>
+          </Card>
 
           {/* Ticket Info */}
           <div className="mt-6 space-y-3">
             <div className="text-center">
-              <p className="text-xl font-semibold">{mockTicket.meta.holderName}</p>
               <p className="text-sm text-muted-foreground font-mono mt-1">
-                {mockTicket.ticketId}
+                {ticketId}
               </p>
             </div>
 
-            {/* Connection Status - Simplified */}
-            <ConnectionStatus
-              isOnline={qrState.isOnline}
-              isLoading={qrState.isLoading}
-              error={qrState.error}
-              sessionInfo={qrState.sessionInfo}
-              onRetry={qrState.retry}
-            />
-
-            {/* Zones */}
-            <div className="flex flex-wrap justify-center gap-2">
-              {mockEntitlements.slice(0, 3).map((zone) => (
-                <div
-                  key={zone.zoneId}
-                  className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium"
-                >
-                  {zone.zoneName}
-                </div>
-              ))}
+            {/* Connection Status */}
+            <div className="text-center">
+              <StatusBadge 
+                variant={qrState.isOnline ? "success" : "error"} 
+                size="sm"
+              >
+                {qrState.isLoading ? "Conectando..." : 
+                 qrState.isOnline ? "Conectado" : "Sin conexión"}
+              </StatusBadge>
+              
+              {qrState.sessionInfo && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Sesión válida hasta: {new Date(qrState.sessionInfo.exp * 1000).toLocaleString()}
+                </p>
+              )}
             </div>
-
-            {/* Entry gates */}
-            {mockTicket.gateAllowlist && (
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground mb-1">Puertas habilitadas</p>
-                <div className="flex justify-center gap-2">
-                  {mockTicket.gateAllowlist.map(gate => (
-                    <StatusBadge key={gate} variant="info" size="sm" showIcon={false}>
-                      {gate}
-                    </StatusBadge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Debug Info (solo en desarrollo) */}
-            {process.env.NODE_ENV === 'development' && qrState.currentJWT && (
-              <details className="mt-4">
-                <summary className="text-xs text-gray-500 cursor-pointer">
-                  Debug Info
-                </summary>
-                <div className="text-xs text-gray-400 mt-2 font-mono bg-gray-50 p-2 rounded">
-                  <p>Evento: {QR_CONFIG.eventId}</p>
-                  <p>Venue: SuperFest 2025</p>
-                  <p>TTL: {QR_CONFIG.qrTtlSeconds}s</p>
-                  <p>Sync: {QR_CONFIG.syncIntervalMs}ms</p>
-                  <p>JWT Length: {qrState.currentJWT.length}</p>
-                  <p>Conectado: {qrState.isOnline ? 'Sí' : 'No'}</p>
-                  <p>Backoffice: {QR_CONFIG.backofficeUrl}</p>
-                </div>
-              </details>
-            )}
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="p-4 border-t border-border">
-        <button 
-          className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground"
-          onClick={() => {
-            const eventInfo = `SuperFest 2025\nFecha: 25 Sept 2025\nVenue: Estadio Nacional`;
-            alert(`Información del evento:\n${eventInfo}`);
-          }}
-        >
-          <Info size={16} />
-          Información del evento
-        </button>
-      </footer>
     </div>
   );
 };
